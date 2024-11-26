@@ -1,6 +1,11 @@
 # RowBoat
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/notnil/rowboat.svg)](https://pkg.go.dev/github.com/notnil/rowboat)
+[![Go Report Card](https://goreportcard.com/badge/github.com/notnil/rowboat)](https://goreportcard.com/report/github.com/notnil/rowboat)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+
+<img src="image.png" alt="Build Status" width="250" />
 
 
 RowBoat is a Go package that provides a simple and efficient way to read from and write to CSV files using Go's generics. It leverages struct tags and reflection to map CSV headers to struct fields, making it easy to work with CSV data in a type-safe manner.
