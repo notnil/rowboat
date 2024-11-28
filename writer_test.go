@@ -29,6 +29,10 @@ func TestWriter(t *testing.T) {
 		t.Fatalf("Failed to create Writer: %v", err)
 	}
 
+	if err := writer.WriteHeader(); err != nil {
+		t.Fatalf("Failed to write header: %v", err)
+	}
+
 	// Write all records
 	for _, person := range people {
 		if err := writer.Write(person); err != nil {
@@ -84,6 +88,10 @@ func TestComplexWriter(t *testing.T) {
 	writer, err := rowboat.NewWriter[ComplexRecord](&buf)
 	if err != nil {
 		t.Fatalf("Failed to create Writer: %v", err)
+	}
+
+	if err := writer.WriteHeader(); err != nil {
+		t.Fatalf("Failed to write header: %v", err)
 	}
 
 	for _, record := range records {
@@ -146,6 +154,10 @@ func TestWriteAll(t *testing.T) {
 		}
 	})
 
+	if err := writer.WriteHeader(); err != nil {
+		t.Fatalf("Failed to write header: %v", err)
+	}
+
 	if err := writer.WriteAll(recordIter); err != nil {
 		t.Fatalf("Failed to write records: %v", err)
 	}
@@ -189,6 +201,10 @@ func TestCustomMarshaler(t *testing.T) {
 		}
 	})
 
+	if err := writer.WriteHeader(); err != nil {
+		t.Fatalf("Failed to write header: %v", err)
+	}
+
 	if err := writer.WriteAll(recordIter); err != nil {
 		t.Fatalf("Failed to write records: %v", err)
 	}
@@ -231,6 +247,10 @@ func TestWriterWithIndexing(t *testing.T) {
 	writer, err := rowboat.NewWriter[IndexedPerson](&buf)
 	if err != nil {
 		t.Fatalf("Failed to create Writer: %v", err)
+	}
+
+	if err := writer.WriteHeader(); err != nil {
+		t.Fatalf("Failed to write header: %v", err)
 	}
 
 	// Write all records

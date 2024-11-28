@@ -97,6 +97,7 @@ package main
 
 import (
     "os"
+
     "github.com/notnil/rowboat"
 )
 
@@ -118,6 +119,10 @@ func main() {
     people := []Person{
         {Name: "Alice", Email: "alice@example.com", Age: 30},
         {Name: "Bob", Email: "bob@example.com", Age: 25},
+    }
+
+    if err := writer.WriteHeader(); err != nil {
+        panic(err)
     }
 
     // Write all records
@@ -206,9 +211,10 @@ package main
 
 import (
     "fmt"
-    "strings"
-    "github.com/notnil/rowboat"
     "slices"
+    "strings"
+
+    "github.com/notnil/rowboat"
 )
 
 func main() {
@@ -239,9 +245,11 @@ Charlie,charlie@example.com,35`
 package main
 
 import (
-    "os"
-    "github.com/notnil/rowboat"
     "iter"
+    "os"
+    "slices"
+
+    "github.com/notnil/rowboat"
 )
 
 func main() {
@@ -261,17 +269,12 @@ func main() {
         {Name: "Bob", Email: "bob@example.com", Age: 25},
     }
 
-    // Convert slice to iterator
-    personIter := iter.Seq[Person](func(yield func(Person) bool) {
-        for _, person := range people {
-            if !yield(person) {
-                return
-            }
-        }
-    })
+    if err := writer.WriteHeader(); err != nil {
+        panic(err)
+    }
 
     // Write all records
-    if err := writer.WriteAll(personIter); err != nil {
+    if err := writer.WriteAll(slices.Values(people)); err != nil {
         panic(err)
     }
 }

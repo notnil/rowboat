@@ -27,9 +27,8 @@ type fieldInfo struct {
 
 // Writer struct holds the CSV writer and mapping information
 type Writer[T any] struct {
-	writer          *csv.Writer
-	fields          []fieldInfo
-	writeHeaderOnce bool
+	writer *csv.Writer
+	fields []fieldInfo
 }
 
 // NewWriter creates a new RowBoat writer instance
@@ -43,6 +42,50 @@ func NewWriter[T any](w io.Writer) (*Writer[T], error) {
 	}
 
 	return rw, nil
+}
+
+func (rw *Writer[T]) WriteHeader() error {
+	headers := make([]string, len(rw.fields))
+	for i, fi := range rw.fields {
+		headers[i] = fi.Name
+	}
+	if err := rw.writer.Write(headers); err != nil {
+		return err
+	}
+	rw.writer.Flush()
+	return nil
+}
+
+// Write writes a single record to the CSV writer
+func (rw *Writer[T]) Write(record T) error {
+	recordValues := make([]string, len(rw.fields))
+	v := reflect.ValueOf(record)
+	for i, fi := range rw.fields {
+		fieldValue := v.FieldByName(fi.Field.Name)
+		strValue, err := getFieldStringValue(fieldValue)
+		if err != nil {
+			return fmt.Errorf("error marshaling field %s: %w", fi.Field.Name, err)
+		}
+		recordValues[i] = strValue
+	}
+
+	if err := rw.writer.Write(recordValues); err != nil {
+		return err
+	}
+	rw.writer.Flush()
+	return nil
+}
+
+// WriteAll writes multiple records from an iterator
+func (rw *Writer[T]) WriteAll(records iter.Seq[T]) error {
+	var err error
+	records(func(record T) bool {
+		if err = rw.Write(record); err != nil {
+			return false
+		}
+		return true
+	})
+	return err
 }
 
 // createFieldInfo extracts information about struct fields, including indexes
@@ -110,39 +153,6 @@ func (rw *Writer[T]) createFieldInfo() error {
 	return nil
 }
 
-// Write writes a single record to the CSV writer
-func (rw *Writer[T]) Write(record T) error {
-	// Write header if not written yet
-	if !rw.writeHeaderOnce {
-		headers := make([]string, len(rw.fields))
-		for i, fi := range rw.fields {
-			headers[i] = fi.Name
-		}
-		if err := rw.writer.Write(headers); err != nil {
-			return err
-		}
-		rw.writer.Flush() // Ensure headers are written
-		rw.writeHeaderOnce = true
-	}
-
-	recordValues := make([]string, len(rw.fields))
-	v := reflect.ValueOf(record)
-	for i, fi := range rw.fields {
-		fieldValue := v.FieldByName(fi.Field.Name)
-		strValue, err := getFieldStringValue(fieldValue)
-		if err != nil {
-			return fmt.Errorf("error marshaling field %s: %w", fi.Field.Name, err)
-		}
-		recordValues[i] = strValue
-	}
-
-	if err := rw.writer.Write(recordValues); err != nil {
-		return err
-	}
-	rw.writer.Flush()
-	return nil
-}
-
 // getFieldStringValue converts a struct field value to string for CSV
 func getFieldStringValue(field reflect.Value) (string, error) {
 	csvMarshalerType := reflect.TypeOf((*CSVMarshaler)(nil)).Elem()
@@ -180,16 +190,4 @@ func getFieldStringValue(field reflect.Value) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported field type: %s", field.Type())
 	}
-}
-
-// WriteAll writes multiple records from an iterator
-func (rw *Writer[T]) WriteAll(records iter.Seq[T]) error {
-	var err error
-	records(func(record T) bool {
-		if err = rw.Write(record); err != nil {
-			return false
-		}
-		return true
-	})
-	return err
 }
